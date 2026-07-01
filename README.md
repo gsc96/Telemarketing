@@ -1,67 +1,70 @@
 # Telemarketing
 
-# Análisis Inteligente de Datos – Trabajo Práctico N° 1
+# Intelligent Data Analysis – Practical Assignment 1
 
-Trabajo práctico obligatorio de la materia **Análisis Inteligente de Datos** (Maestría en Exploración de Datos y Descubrimiento del Conocimiento). El objetivo es aplicar técnicas de muestreo, estadística descriptiva, visualización, pruebas de hipótesis y regresión lineal sobre un dataset real, utilizando R.
+Mandatory coursework for the **Intelligent Data Analysis** course of the **Master's Degree in Data Mining and Knowledge Discovery**. The objective of this project is to apply sampling techniques, descriptive statistics, data visualization, hypothesis testing, and linear regression to a real-world dataset using **R**.
 
 ## Dataset
 
-- **Nombre:** ML Marathon Dataset (Azure Developer Community)
-- **Fuente:** Microsoft Azure
-- **Año de publicación:** 2022
-- **Tipo:** Base de datos abierta, formato CSV, matricial, multivariada
+- **Name:** ML Marathon Dataset (Azure Developer Community)
+- **Source:** Microsoft Azure
+- **Publication Year:** 2022
+- **Type:** Open-access, multivariate CSV dataset
 
-El dataset contiene información de una **institución financiera** que llevó adelante campañas de **marketing telefónico (telemarketing)** para ofrecer a sus clientes la contratación de un **depósito a plazo fijo**. Cada fila representa un cliente contactado durante una o más campañas, e incluye datos sociodemográficos, información sobre su situación bancaria y detalles del contacto realizado.
+The dataset contains information from a **financial institution** that conducted **telemarketing campaigns** to promote **term deposit subscriptions**. Each record represents a customer contacted during one or more marketing campaigns and includes demographic information, banking details, and information about the contact itself.
 
-El objetivo del análisis es caracterizar a los clientes según si finalmente contrataron o no el depósito, y explorar qué variables se asocian con esa decisión.
+The objective of the analysis is to characterize customers based on whether they subscribed to the term deposit and to identify which variables are associated with that decision.
 
-**Principales variables del dataset:**
+### Main Variables
 
-| Variable | Descripción |
+| Variable | Description |
 |---|---|
-| `age` | Edad del cliente |
-| `job` | Tipo de ocupación/empleo |
-| `marital` | Estado civil (casado, soltero, divorciado) |
-| `education` | Nivel educativo (primary, secondary, tertiary, unknown) |
-| `default` | Si el cliente tiene crédito en incumplimiento (default) |
-| `balance` | Saldo promedio anual en la cuenta bancaria |
-| `housing` | Si el cliente tiene préstamo hipotecario |
-| `loan` | Si el cliente tiene préstamo personal |
-| `contact` | Tipo de contacto utilizado (celular, teléfono fijo, etc.) |
-| `duration` | Duración en segundos del último contacto telefónico |
-| `campaign` | Cantidad de contactos realizados durante la campaña actual |
-| `pdays` | Días transcurridos desde el último contacto de una campaña anterior |
-| `previous` | Cantidad de contactos realizados antes de la campaña actual |
-| `poutcome` | Resultado de la campaña de marketing anterior |
-| `deposit` | **Variable objetivo**: indica si el cliente contrató (`yes`) o no (`no`) el depósito a plazo |
+| `age` | Customer age |
+| `job` | Occupation |
+| `marital` | Marital status (married, single, divorced) |
+| `education` | Education level (primary, secondary, tertiary, unknown) |
+| `default` | Whether the customer has credit in default |
+| `balance` | Average yearly account balance |
+| `housing` | Whether the customer has a housing loan |
+| `loan` | Whether the customer has a personal loan |
+| `contact` | Contact communication type (cellular, telephone, etc.) |
+| `duration` | Duration of the last phone call (seconds) |
+| `campaign` | Number of contacts performed during the current campaign |
+| `pdays` | Days since the customer was last contacted in a previous campaign |
+| `previous` | Number of contacts before the current campaign |
+| `poutcome` | Outcome of the previous marketing campaign |
+| `deposit` | **Target variable:** whether the customer subscribed (`yes`) or not (`no`) to a term deposit |
 
-Sobre esta base, se generó una **muestra aleatoria estratificada y balanceada por `deposit`** (1000 casos por cada nivel, n = 2000 en total), utilizando una semilla fija para garantizar la reproducibilidad. Todo el trabajo práctico se desarrolla sobre esta muestra.
+A **balanced stratified random sample** was generated using the `deposit` variable (1,000 observations per class, **n = 2,000**) with a fixed random seed to ensure reproducibility. All analyses presented in this project were performed using this sample.
 
-## Contenido del trabajo
+---
 
-A partir de una muestra aleatoria estratificada y balanceada por la variable `deposit` (n = 2000, semilla fija), se desarrollan los siguientes puntos:
+## Project Contents
 
-1. Generación de la muestra estratificada y balanceada
-2. Análisis estadístico descriptivo de variables numéricas por nivel de `deposit` (media, mediana, moda, varianza, asimetría, curtosis, etc.)
-3. Representación gráfica de las variables numéricas
-4. Tabla de frecuencias y porcentajes de `marital` según `deposit`
-5. Gráfico de la tabla de frecuencias
-6. Test de asociación entre dos variables continuas categorizadas
-7. Test de asociación entre `education` y otra variable categórica
-8. Intervalo de confianza (95%) para la diferencia de medias según `deposit`
-9. Test de hipótesis para la diferencia de medias
-10. Test de hipótesis sobre una muestra estratificada de 30 elementos
-11. Comparación de la duración según nivel educativo (ANOVA / test no paramétrico + verificación de supuestos)
-12. Regresión lineal simple entre dos variables cuantitativas
-13. Informe final de conclusiones (500–800 palabras)
+Using the balanced stratified sample (`n = 2,000`), the following analyses were carried out:
 
-## Tecnologías y librerías utilizadas
+1. Generation of the balanced stratified sample
+2. Descriptive statistical analysis of numerical variables by `deposit` group (mean, median, mode, variance, skewness, kurtosis, etc.)
+3. Graphical exploration of numerical variables
+4. Frequency and percentage table of `marital` by `deposit`
+5. Visualization of the frequency table
+6. Association test between two categorized continuous variables
+7. Association test between `education` and another categorical variable
+8. 95% confidence interval for the difference in means by `deposit`
+9. Hypothesis test for the difference in means
+10. Hypothesis test on a stratified sample of 30 observations
+11. Comparison of call duration across education levels (ANOVA or non-parametric alternative, including assumption checks)
+12. Simple linear regression between two quantitative variables
+13. Final report summarizing the main findings (500–800 words)
+
+---
+
+## Technologies and Libraries
 
 - **R** (R Markdown)
-- `dplyr` – manipulación de datos
-- `readr` – lectura de archivos CSV
-- `e1071` – asimetría y curtosis
-- `modeest` – cálculo de la moda
-- `corrplot` – visualización de correlaciones
-- `kableExtra` – formato de tablas
-
+- **dplyr** – data manipulation
+- **readr** – CSV file import
+- **e1071** – skewness and kurtosis
+- **modeest** – mode estimation
+- **corrplot** – correlation visualization
+- **kableExtra** – table formatting
