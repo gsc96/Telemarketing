@@ -1,0 +1,512 @@
+---
+title: "Análisis inteligente de datos - Trabajo práctico 1"
+subtitle: "Especialización en Explotación de datos y Descubrimiento del conocimiento"
+author: "Giulia Solange Clas"
+date: "2023-05-15"
+output: 
+  html_document:
+    theme: cosmo
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introducción
+
+En el presente trabajo se analizará una base con datos relacionados a campañas de marketing provenientes de una institución financiera. Estas campañas se basaron en realizar llamadas telefónicas a clientes. 
+
+## Muestreo y análisis exploratorio de datos
+
+En primera instancia, se cargó la base de datos original y se llevó a cabo un muestreo aleatorio estratificado y balanceado por la variable "deposito" (n=2000). 
+Se asume la independencia de los datos con los que se trabaja.
+
+```{r tp1 aid, message= FALSE, echo=FALSE}
+
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+```
+
+## 1.
+
+```{r, message = FALSE}
+# 1.
+library(readr)
+library(dplyr)
+data <- read_csv("data.csv")
+
+# Fijo una semilla aleatoria y efectúo el muestreo 
+
+set.seed(054)
+muestra_estrat <- data%>%
+  group_by(deposit)%>%
+  sample_n(1000)
+
+write.csv(muestra_estrat, file = "muestra.csv")
+muestra <- read_csv("muestra.csv")
+muestra <- muestra[, -1]
+```
+
+## 2.
+
+Se procedió realizando un análisis estadístico de cada una de las variables numéricas para cada valor de depósito.
+
+```{r, message=FALSE}
+library(kableExtra)
+
+# Aprovechando que solo eran dos estratos, generé dos tablas y me quedé con las columnas numéricas
+
+datos_deposito_si <- subset(muestra, deposit == "yes")
+datos_deposito_no <- subset(muestra, deposit == "no")
+datos_deposito_si <- datos_deposito_si %>% 
+  select_if(is.numeric)
+datos_deposito_no <- datos_deposito_no %>% 
+  select_if(is.numeric)
+
+# Ahora genero una tabla con la estadística descriptiva para cada categoría
+
+library(modeest)
+library(e1071)
+
+estad_deposito_si <- cbind(num_datos = apply(datos_deposito_si, 2, function(x) sum(!is.na(x))),
+                           media = colMeans(datos_deposito_si, na.rm = TRUE), 
+                           min = apply(datos_deposito_si, 2, min),
+                           max = sapply(datos_deposito_si, max),
+                           mediana = apply(datos_deposito_si, 2, median),
+                           moda = apply(datos_deposito_si, 2, mfv),
+                           var = apply(datos_deposito_si, 2, var, na.rm = TRUE),
+                           desv_est = apply(datos_deposito_si, 2, sd, na.rm = TRUE),
+                           coef_var = apply(datos_deposito_si, 2, function(x) sd(x, na.rm = TRUE) / mean(x, na.rm = TRUE)),
+                           cuartil_1 = apply(datos_deposito_si, 2, quantile, na.rm = TRUE, probs = 0.25),
+                           cuartil_3 = apply(datos_deposito_si, 2, quantile, na.rm = TRUE, probs = 0.75),
+                           rango_intercuartilico = apply(datos_deposito_si, 2, IQR, na.rm = TRUE),
+                           mad = apply(datos_deposito_si, 2, mad, na.rm = TRUE),
+                           asimetria = apply(datos_deposito_si, 2, skewness, na.rm = TRUE),
+                           curtosis = apply(datos_deposito_si, 2, kurtosis, na.rm = TRUE))
+
+estad_deposito_no <- cbind(num_datos = apply(datos_deposito_no, 2, function(x) sum(!is.na(x))),
+                           media = colMeans(datos_deposito_no, na.rm = TRUE), 
+                           min = apply(datos_deposito_no, 2, min),
+                           max = sapply(datos_deposito_no, max),
+                           mediana = apply(datos_deposito_no, 2, median),
+                           moda = apply(datos_deposito_no, 2, mfv),
+                           var = apply(datos_deposito_no, 2, var, na.rm = TRUE),
+                           desv_est = apply(datos_deposito_no, 2, sd, na.rm = TRUE),
+                           coef_var = apply(datos_deposito_no, 2, function(x) sd(x, na.rm = TRUE) / mean(x, na.rm = TRUE)),
+                           cuartil_1 = apply(datos_deposito_no, 2, quantile, na.rm = TRUE, probs = 0.25),
+                           cuartil_3 = apply(datos_deposito_no, 2, quantile, na.rm = TRUE, probs = 0.75),
+                           rango_intercuartilico = apply(datos_deposito_no, 2, IQR, na.rm = TRUE),
+                           mad = apply(datos_deposito_no, 2, mad, na.rm = TRUE),
+                           asimetria = apply(datos_deposito_no, 2, skewness, na.rm = TRUE),
+                           curtosis = apply(datos_deposito_no, 2, kurtosis, na.rm = TRUE))
+
+# Medidas estadísticas para la categoría depósito si
+
+estad_deposito_si %>% # Este código mejora el formato de la tabla
+  kbl()%>%
+  kable_styling()
+
+# Medidas estadísticas para la categoría depósito no
+
+estad_deposito_no %>% 
+  kbl()%>%
+  kable_styling()
+
+```
+
+## 3.
+
+A continuación se muestran los gráficos seleccionados para cada variable según su tipo. 
+
+```{r}
+# 3.
+
+par(mfrow=c(2,3))
+boxplot(age~deposit,
+         data=muestra,
+         xlab="Deposit",
+         ylab="Age",
+         col="ivory",
+         border="grey",
+         outline=FALSE)
+
+boxplot(balance~deposit,
+         data=muestra,
+         xlab="Deposit",
+         ylab="Balance",
+         col="ivory",
+         border="grey",
+         outline=FALSE)
+
+boxplot(day~deposit,
+         data=muestra,
+         xlab="Deposit",
+         ylab="Day",
+         col="ivory",
+         border="grey",
+         outline=FALSE)
+
+boxplot(duration~deposit,
+         data=muestra,
+         xlab="Deposit",
+         ylab="Duration",
+         col="ivory",
+         border="grey",
+         outline=FALSE)
+
+# Saco los valores que corresponden a 999
+muestra_filtrada <- subset(muestra, pdays != 999)
+boxplot(pdays~deposit,
+         data=muestra_filtrada,
+         xlab="Deposit",
+         ylab="pdays",
+         col="ivory",
+         border="grey",
+         outline=FALSE)
+
+par(mfrow=c(1,1))
+```
+
+Si bien en el enunciado se especifica representar gráficamente aquellas variables que sean numéricas, para poder entender el set de datos se llevaron a cabo gráficos para cada variable. Para aquellas variables categóricas se eligió una representación en forma de gráficos de torta, ya que facilitan visualizar variables con pocas categorías y comparar proporciones entre ellas de manera rápida y sencilla.
+Para las variables numéricas en cambio, se optó por una representación en forma de histogramas de frecuencias y gráficos de barras. De esta manera se logró tener una idea clara y sencilla de la distribución de los datos.
+
+```{r}
+
+hist(muestra$age, main = 'Frecuencias de edades', xlab = 'Edad', ylab='Frecuencia',col="ivory",border="grey")
+pie(table(muestra$job), col=rainbow(25, alpha=0.5),font=3, cex=0.8, radius=1, border=F, main = 'Cargo laboral')
+pie(table(muestra$marital), col=rainbow(25, alpha=0.5),font=3, cex=0.8, radius=1, border=F, main = 'Estado civil')
+barplot(table(muestra$education), main = 'Nivel educativo', xlab = 'Máximo nivel educativo alcanzado', col="ivory",border="grey", horiz = FALSE)
+pie(table(muestra$default), col=rainbow(25, alpha=0.5),font=3, cex=0.8, radius=1, border=F, main = 'Incumplimiento de pagos')
+hist(muestra$balance, main = 'Balances bancarios', xlab = 'Balances', ylab='Frecuencia',col="ivory",border="grey")
+pie(table(muestra$housing), col=rainbow(25, alpha=0.5),font=3, cex=0.8, radius=1, border=F, main = 'Clientes con hipoteca')
+pie(table(muestra$loan), col=rainbow(25, alpha=0.5),font=3, cex=0.8, radius=1, border=F, main = 'Clientes con préstamos personales')
+pie(table(muestra$contact), col=rainbow(25, alpha=0.5),font=3, cex=0.8, radius=1, border=F, main = 'Método de contacto del cliente')
+barplot(table(muestra$day), main = 'Días de contacto con el cliente', xlab = 'Día', col="ivory",border="grey", horiz = FALSE)
+barplot(table(muestra$month), main = 'Meses de contacto con el cliente', xlab = 'Mes', col="ivory",border="grey", horiz = FALSE, las = 2)
+hist(muestra$duration, main = 'duración de la llamada', xlab = 'tiempo', ylab='Frecuencia',col="ivory",border="grey")
+barplot(table(muestra$campaign), main = 'Campaña', xlab = 'Número de veces que se contactó al cliente', ylab='Frecuencia',col="ivory",border="grey")
+pie(table(muestra$poutcome), col=rainbow(25, alpha=0.5),font=3, cex=0.8, radius=1, border=F, main = 'Resultado de la última campaña')
+# Genero un subset de datos no teniendo en cuenta los valores 999
+muestra_filtrada <- subset(muestra, pdays != 999)
+barplot(table(muestra_filtrada$pdays), main = 'Días transcurridos desde el último contacto', xlab = 'Días', col="ivory",border="grey", horiz = FALSE)
+barplot(table(muestra$previous), main = 'Contactos al cliente antes de la campaña actual', xlab = 'Número de contactos', col="ivory",border="grey", horiz = FALSE)
+```
+
+# 4 y 5.
+
+En respuesta a los ítems 4 y 5, se presenta a continuación una tabla de frecuencias y porcentaje para la variable “marital” (estado civil) según el nivel de la variable “deposit” junto con el gráfico pertinente
+
+```{r}
+# 4.
+tabla_marital_deposit <- cbind(table(muestra$marital, muestra$deposit),
+                               prop.table(table(muestra$marital, muestra$deposit), margin = 1) * 100)
+
+colnames(tabla_marital_deposit) <- c("no_dep_frec", "si_dep_frec", "no_dep_por", "si_dep_por")
+
+tabla_marital_deposit %>% 
+  kbl()%>%
+  kable_styling()
+
+# 5.
+barplot(table(muestra$marital, muestra$deposit), main = "Depósito según estado civil",
+        xlab = 'Depósito', col= c('mistyrose','lavender', 'ivory'), horiz = FALSE, width = 0.2)
+legend("topright", legend = c("Casado", "Divorciado", "Soltero"), fill = c('mistyrose','lavender', 'ivory'), cex = 0.8, bty = "n", ncol = 1, horiz = FALSE)
+```
+
+## 6.
+
+En respuesta al ítem 6, se seleccionaron las variables numéricas "age" y "balance". Se planteó la posibilidad de que las personas mayores a 60 (edad jubilatoria de mujeres) tengan menos deudas en el banco (por ejemplo, por recibir menos préstamos), para lo cual se plantearon las siguientes hipótesis:
+
+H0: No tener un balance negativo en la cuenta bancaria no tiene relación con ser mayor de 60 años
+
+H1: Hay asociación entre no tener un balance negativo y ser mayor de 60 años
+
+```{r}
+# 6.
+age_ranges <- cut(muestra$age, breaks = c(17, 60, Inf))
+# Crear rangos para balance
+balance_ranges <- cut(muestra$balance, breaks = c(-Inf, 0, Inf), labels = c("balance_negativo", "balance_positivo"))
+
+# Crear nueva variable categórica para age
+muestra$age_cat <- factor(age_ranges)
+# Crear nueva variable categórica para balance
+muestra$balance_cat <- factor(balance_ranges)
+
+# Realizar test de chi-cuadrado de independencia
+test_chi <- chisq.test(muestra$age_cat, muestra$balance_cat)
+# Mostrar resultados del test
+test_chi
+
+# Únicamente viendo este resultado, uno tendería a rechazar la hipótesis nula, puesto a que habría evidencia para pensar que existe un vínculo entre ser mayor de 60 y no tener balances negativos en el banco
+
+barplot(table(muestra$balance_cat, muestra$age_cat),beside=TRUE,col= c("ivory","lavender"),ylab="Cantidad") 
+legend("topright", legend = c("menores de 60", "mayores de 60"), fill=c("ivory","lavender"))
+
+# Sin embargo, en este gráfico observamos mejor que tenemos muchos más datos para casos con balances positivos que para casos con balances negativos, lo que genera un gran desbalance de datos
+# Las diferencias significativas pueden ser debido a esto, habría que tomar estos resultados con cuidado
+
+mosaicplot(table(muestra$age_cat,muestra$balance_cat),col=c("ivory","lavender"),ylab="Balance",xlab="Edad", cex=0.8, main='Balances según bloque etario')
+
+tabla_conting_age_balance <- table(muestra$age_cat,muestra$balance_cat)
+tabla_conting_age_balance %>% #código de formato de tabla
+  kbl()%>%
+  kable_styling()
+
+# Vemos en la siguiente tabla que se cumple el supuesto de que los valores esperados en cada celda de la tabla de contingencia sean al menos 5
+
+chisq.test(tabla_conting_age_balance)$expected
+chisq.test(tabla_conting_age_balance)$residuals
+
+library(corrplot)
+corrplot(chisq.test(tabla_conting_age_balance)$residuals, is.cor = FALSE)
+
+```
+
+A nivel 0,05, se rechaza la hipótesis de independencia de variables. Para visualizar gráficamente la relación, se graficaron los residuos de Pearson. El color azul indica que la asociación es positiva, mientras que el rojo indica que las columnas correspondientes están asociadas negativamente.
+
+## 7.
+
+Para el ítem 7, se comparó al grupo con estudios secundarios con el grupo con estudios terciarios según tienen o no una hipoteca
+
+H0: No existe relación entre tener estudios terciarios y no solicitar una hipoteca
+
+H1: Existe relación entre tener estudios terciarios y no solicitar una hipoteca
+
+```{r}
+# 7.
+# Elijo comparar los que tienen hipoteca y estudios secundarios vs. los que tienen hipoteca y estudios terciarios
+
+# Veamos qué pasa si solo comparo los que tienen secundario completo vs. los que tienen estudios terciarios
+nueva_muestra <- subset(muestra, education %in% c("secondary", "tertiary"))
+
+mosaicplot(t(table(nueva_muestra$education, nueva_muestra$housing)),col=c("ivory","lavender"),ylab="Nivel educativo",xlab="Tiene hipoteca", cex=0.8, main="Hipoteca según nivel educativo")
+
+# Realizar test de chi-cuadrado de independencia
+test_chi <- chisq.test(nueva_muestra$education, nueva_muestra$housing)
+# Mostrar resultados del test
+test_chi
+
+# Hay evidencia para suponer que existe una relación entre tener un terciario y no solicitar hipoteca
+
+```
+
+## 8 y 9.
+
+Para los ítems 8 y 9 se seleccionó la variable "balance". Según el teorema central del límite, se podría asumir que la media de ambas poblaciones tiene una distribución aproximadamente normal, dado que el tamaño muestral es grande. Sin embargo, para verificar si ambas poblaciones siguen una distribución normal, se realizó un test de Shapiro-Wilk con un nivel de significación del 0,05. La hipótesis nula de este test es que ambas poblaciones tienen una distribución normal. 
+
+La muestra no sigue una distribución normal, con lo cual es más adecuado optar por un método no paramétrico
+
+```{r}
+# 8 y 9.
+#Se calculó el intervalo de confianza para la diferencia de medias, a nivel 95%.
+
+#varianza y n de los datos de balance para deposit = yes
+varianza_balance_si <- var(datos_deposito_si$balance)
+n_balance_si <- length(datos_deposito_si$balance)
+
+#varianza y n de los datos de balance para deposit = no
+varianza_balance_no <- var(datos_deposito_no$balance)
+n_balance_no <- length(datos_deposito_no$balance)
+
+#varianza pooled
+pooled <- ((n_balance_si-1)*varianza_balance_si+(n_balance_no-1)*varianza_balance_no)/
+  (n_balance_si+n_balance_no-2)
+
+#medias y diferencia de medias
+media_balance_si <- mean(datos_deposito_si$balance)
+media_balance_no <- mean(datos_deposito_no$balance)
+dif_medias <- media_balance_si - media_balance_no
+
+#coeficiente z (0.95 a dos colas)
+z <- qnorm(0.975)
+
+#raiz de n
+raiz <- sqrt(1/n_balance_si + 1/n_balance_no)
+
+#intervalo de confianza
+intervalo <- z*pooled*raiz
+lim_inf <- dif_medias-intervalo
+lim_sup <- dif_medias+intervalo
+
+paste("El intervalo de confianza de nivel 95% para la diferencia de medias es ","(",round(lim_inf,3),";",round(lim_sup,3), ")")
+
+dif_medias
+
+# Notar que el rango tiene un valor extremadamente grande, esto tiene que ver con los valores de las varianzas también grandes
+
+# Trazar el primer gráfico
+# Observando el gráfico vemos que los datos no parecen seguir una distribución normal
+plot(density(subset(muestra, deposit == "yes")$balance), 
+      main = "Densidad de balance para deposit=yes y deposit=no",
+      xlab = "Balance", ylab = "Densidad")
+# Agregar el segundo gráfico
+lines(density(subset(muestra, deposit == "no")$balance), col = "lavender")
+# Agregar leyenda
+legend("topright", legend = c("deposit=yes", "deposit=no"), 
+      col = c("grey", "lavender"), lty = 1)
+
+# Elijo la variable continua "balance"
+# Evalúo diferencias entre varianzas
+
+var.test(balance~deposit, 
+         data=muestra, 
+         alternative = "two.sided")
+# Las varianzas no son iguales
+
+# Evalúo normalidad para ambos grupos
+
+shapiro.test(subset(muestra, deposit == "yes")$balance)
+qqnorm(subset(muestra, deposit == "yes")$balance)
+qqline(subset(muestra, deposit == "yes")$balance)
+
+shapiro.test(subset(muestra, deposit == "no")$balance)
+qqnorm(subset(muestra, deposit == "no")$balance)
+qqline(subset(muestra, deposit == "no")$balance)
+
+# Aplico un test no paramétrico
+# H0: no hay diferencia entre las medias de balances de los que tienen depósito de los que no
+# H1: las medias difieren
+
+wilcox.test(balance~deposit, 
+        data=muestra, 
+        alternative = "two.sided", 
+        var.equal = F)
+
+# El método no paramétrico arrojó un resultado significativo, hay evidencia para suponer que existen diferencias en las medias
+```
+
+## 10.
+
+Para el ítem 10, se selecciona una muestra de 30 elementos. En este caso se trabajó con métodos no paramétricos independientemente de la distribución de los datos, debido al n bajo.
+
+```{r}
+# 10.
+
+muestra_30 <- muestra_estrat%>%
+     group_by(deposit)%>%
+     sample_n(15)
+
+# Hago un boxplot (sin outliers)
+boxplot(balance~deposit,
+        data=muestra_30,
+        xlab="deposit",
+        ylab="Balance",
+        col="ivory",
+        border="grey",
+        outline=FALSE)
+
+# Aplico un test no paramétrico
+# H0: no hay diferencia entre las medias de balances de los que tienen depósito de los que no
+# H1: las medias difieren
+
+wilcox.test(balance ~ deposit, data = muestra_30)
+
+# En este caso, no rechazo H0
+```
+
+Notar como el mismo test que daba significancia estadística con un n de 2000, no da significancia estadística con un n de 30
+
+## 11.
+
+Para el ítem 11 se plantearon las siguientes hipótesis:
+
+H0: No existe diferencia en la duración respecto los niveles de educación 
+
+H1: Existe diferencia en la duración respecto los niveles de educación 
+
+```{r}
+# 11.
+
+boxplot(duration~education,
+         data=muestra,
+         col="ivory",
+         border="grey")
+
+# Pruebo normalidad
+
+shapiro.test(subset(muestra, education == "primary")$duration)
+
+shapiro.test(subset(muestra, education == "secondary")$duration)
+
+shapiro.test(subset(muestra, education == "tertiary")$duration)
+
+shapiro.test(subset(muestra, education == "unknown")$duration)
+
+# Los datos no siguen una distribución normal
+
+kruskal.test(muestra$duration, muestra$education) # Realiza el test de Kruskal Wallis
+
+# No rechazo H0, con lo cual, no hay evidencia para suponer que existe diferencia en la duración respecto los niveles de educación 
+```
+
+## 12.
+
+En este ítem se eligió buscar una correlación entre la variable "age" y "balance". Se trabajó con el set de datos muestra_30 para visualizar los datos de manera más sencilla.
+
+Un modelo de regresión no parece ser útil para describir estas variables, puesto a que no parece haber correlación. Por otro lado, los residuos no siguen una distribución normal.
+
+```{r}
+# 12.
+
+plot(muestra_30$age,muestra_30$balance)
+modelo <- lm(balance ~ age, data=muestra)
+summary(modelo)
+
+cor.test(muestra_30$balance,muestra_30$age, method = "pearson")
+
+# No hay correlación
+
+residuos<-rstandard(modelo)
+
+par(mfrow=c(1,3)) # divide la ventana en una fila y tres columnas 
+hist(residuos) # histograma de los residuos estandarizados 
+boxplot(residuos) # diagrama de cajas de los residuos estandarizados 
+qqnorm(residuos) # gráfico de cuantiles de los residuos estandarizados 
+qqline(residuos)
+
+# Los residuos no siguen una distribución normal
+
+```
+
+## Informe
+
+En el presente trabajo, se analizó una base con datos relacionados a campañas de marketing provenientes de una institución financiera. Se asumió independencia de los datos.
+
+Para esto, se obtuvo una muestra aleatoria estratificada de 2000 elementos, balanceada por la variable "deposit". Esta variable indica si el cliente ha realizado un depósito a plazo fijo o no, lo cual es ciertamente el objetivo de la campaña. Se realizó una exploración de dicha muestra, obteniendo parámetros estadísticos relevantes y graficando las variables de interés, discriminadas, en principio, por la variable "deposit". Mirando únicamente los gráficos, no parecen haber grander diferencias en la distribución de los datos separados por "deposit", excepto en el gráfico correspondiente a la variable "duration", relacionado a la duración de la llamada (la campaña de marketing se basó en efectuar llamadas telefónicas a los clientes).
+
+En una segunda instancia, se estudió (sin pruebas estadísticas) la relación entre las variables "marital" (estado civil de los clientes) y el nivel de la variable "deposit". Vemos que parecen haber diferencias en cuanto a la proporción de solteros que han realizado un depósito a plazo fijo. Sin embargo, debería hacerse un test estadístico pertinente para poder afirmar de forma más certera si existen o no diferencias.
+
+Se continuó seleccionando las variables numéricas "age" y "balance" y se generar dos nuevas variables categóricas. En el caso de la variable "age" se la dividió en dos niveles: mayores de 60 y menores de 60 (edad jubilatoria en mujeres), mientras que a "balance" se la dividió en los niveles: balance negativo y balance positivo. A continuación, se planteó la posibilidad de que las personas mayores a 60 tengan menos deudas en el banco, es decir, balances positivos (por ejemplo, por recibir menos préstamos), para lo cual se plantearon las siguientes hipótesis:
+
+H0: No tener un balance negativo en la cuenta bancaria no tiene relación con ser mayor de 60 años
+H1: Hay asociación entre no tener un balance negativo y ser mayor de 60 años
+
+Si bien se cumplieron los supestos del chi cuadrado y el test obtuvo significancia estadística, esto pudo deberse a que los datos no estaban balanceados, por lo que debe tomarse con cuidado este resultado.
+
+Seguido de esto se comparó al grupo con estudios secundarios y el grupo con estudios terciarios según tienen o no una hipoteca aplicando las siguientes hipótesis:
+
+H0: No existe relación entre tener estudios terciarios y no solicitar una hipoteca
+H1: Existe relación entre tener estudios terciarios y no solicitar una hipoteca
+
+Realizando una prueba del tipo chi cuadrado (seleccionada por la naturaleza de estos datos) se obtuvo significancia estadística, con los cual, habría evidencia para suponer que existe relación entre tener estudios terciarios y no solicitar una hipoteca.
+
+Luego se llevó a cabo un análisis de la variable "balance" según los niveles de la variable "deposit". En primera instancia se calculó el intervalo de confianza para la diferencia de medias, con un nivel de 95%. El intervalo obtenido no contiene al cero. Siendo que estos datos no siguen una distribución normal, se aplicó un test de Wilcoxon. Wilcoxon es una prueba no paramétrica que se utiliza para comparar dos muestras independientes o relacionadas. Esta prueba es una alternativa al t-test de dos muestras cuando los supuestos no se cumplen. Las hipótesis planteadas fueron las siguientes:
+
+H0: no hay diferencia entre las medias de balances de los que tienen depósito de los que no
+H1: las medias difieren
+
+Con un n=2000, la prueba estadística no paramétrica arrojó significancia estadística, con los cual, hay evidencia para suponer que existe diferencias entre las medias.
+
+Posteriormente, se llevó a cabo el mismo ensayo pero con un subset de la muestra de n=30. De la misma manera, se llevó a cabo un test no paramétrico pero que, en esta instancia, no arrojó significancia estadística. De esto podemos concluir la importancia del tamaño muestral para hacer inferencias estadísticas.
+
+Seguido de esto, se plantearon las siguientes hipótesis:
+
+H0: No existe diferencia en la duración respecto los niveles de educación
+H1: Existe diferencia en la duración respecto los niveles de educación
+
+Dado a que estos datos no siguieron una distribución normal, se llevó a cabo un test de Kruskal-Wallis, una prueba no paramétrica que se utiliza para comparar la distribución de varias muestras independientes. Esta prueba es una alternativa al análisis de varianza (ANOVA) cuando los supuestos no se cumplen.
+
+En este caso, no se obtuvo significancia estadística, con lo cual, no hay evidencia para suponer que existe diferencia en la duración respecto los niveles de educación.
+
+Por último, se buscó una correlación entre la variable “age” y “balance”. Sin embargo, un modelo de regresión no parece ser útil para describir estas variables, puesto a que no existe correlación. 
